@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Sobé — Checklist de Performance</title>
+<link rel="icon" type="image/png" href="sobe.png">
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -40,7 +41,9 @@
     border-bottom: 2px solid var(--ink);
     padding-bottom: 16px; gap: 24px; flex-wrap: wrap;
   }
-  .brand-text { display: flex; flex-direction: column; gap: 3px; }
+  .brand { display: flex; align-items: center; gap: 14px; }
+  .brand-logo { height: 44px; width: auto; display: block; }
+  .brand-text { display: flex; flex-direction: column; gap: 3px; padding-left: 14px; border-left: 1.5px solid var(--line); }
   .brand-name {
     font-family: var(--display); font-size: 22px; font-weight: 800;
     letter-spacing: -.5px; color: var(--accent); line-height: 1;
@@ -79,7 +82,9 @@
     border-radius: 10px; overflow: hidden; transition: opacity .2s;
   }
   .tool-card.disabled { opacity: .4; }
-  .tool-card.disabled .items-body { display: none; }
+  .tool-card.disabled .items-body,
+  .tool-card:not(.open) .items-body { display: none; }
+  .tool-card:not(.open) .tool-header { border-bottom: none; }
 
   /* ── TOOL HEADER ── */
   .tool-header {
@@ -168,6 +173,16 @@
   .status-btn.s-issue { background: var(--red-bg);   border-color: var(--red);   color: var(--red);   font-weight: 600; }
   .status-btn.s-na    { background: #f0f0f0; border-color: #aaa; color: #555; font-weight: 600; }
 
+  /* ── MOBILE: status buttons in a row below the text ── */
+  @media screen and (max-width: 600px) {
+    body { padding: 24px 16px 64px; }
+    .check-item { flex-wrap: wrap; }
+    .status-group { flex-direction: row; flex-basis: 100%; padding: 0 0 2px 20px; }
+    .status-btn { flex: 1; padding: 7px 8px; font-size: 11px; }
+    .meta-input { width: 100%; }
+    .meta-field { flex: 1 1 130px; }
+  }
+
   /* ── PRINT STATUS BADGE (hidden on screen) ── */
   .print-badge { display: none; }
 
@@ -207,6 +222,10 @@
     /* Hide screen-only chrome */
     .btn, .actions, .chevron,
     .tool-toggle, .progress-wrap { display: none !important; }
+
+    /* Collapsed cards still print their items */
+    .tool-card:not(.open) .items-body { display: block !important; }
+    .tool-card .tool-header { border-bottom: 1px solid #ddd !important; }
 
     /* Disabled tools vanish entirely */
     .tool-card.disabled { display: none !important; }
@@ -299,18 +318,21 @@
 <body>
 
 <header class="page-header">
-  <div class="brand-text">
-    <div class="brand-name">Sobé</div>
-    <div class="brand-sub">Checklist · Performance de Contas</div>
+  <div class="brand">
+    <img class="brand-logo" src="sobe.png" alt="Sobé">
+    <div class="brand-text">
+      <div class="brand-name">Checklist</div>
+      <div class="brand-sub">Performance de Contas</div>
+    </div>
   </div>
   <div class="meta-fields">
     <div class="meta-field">
       <label class="meta-label">Cliente</label>
-      <input class="meta-input" type="text" placeholder="Nome do cliente">
+      <input class="meta-input" type="text" id="clientInput" placeholder="Nome do cliente">
     </div>
     <div class="meta-field">
       <label class="meta-label">Responsável</label>
-      <input class="meta-input" type="text" placeholder="Seu nome">
+      <input class="meta-input" type="text" id="ownerInput" placeholder="Seu nome">
     </div>
     <div class="meta-field">
       <label class="meta-label">Data</label>
@@ -554,14 +576,14 @@ function buildTools() {
               <span class="status-dot" id="dot-${key}"></span>
               <div class="check-content">
                 <div class="check-label">${item}</div>
-                <textarea class="obs-field" placeholder="Observação…" rows="1"
-                  oninput="autoGrow(this)"></textarea>
+                <textarea class="obs-field" id="obs-${key}" placeholder="Observação…" rows="1"
+                  oninput="autoGrow(this); save()"></textarea>
               </div>
               <span class="print-badge" id="badge-${key}"></span>
               <div class="status-group">
-                <button class="status-btn" onclick="setStatus('${key}','ok',this)">✓ Ok</button>
-                <button class="status-btn" onclick="setStatus('${key}','issue',this)">⚠ Problema</button>
-                <button class="status-btn" onclick="setStatus('${key}','na',this)">N/A</button>
+                <button class="status-btn" data-val="ok" onclick="setStatus('${key}','ok')">✓ Ok</button>
+                <button class="status-btn" data-val="issue" onclick="setStatus('${key}','issue')">⚠ Problema</button>
+                <button class="status-btn" data-val="na" onclick="setStatus('${key}','na')">N/A</button>
               </div>
             </div>`;
         }).join('')}
@@ -585,42 +607,49 @@ function buildTools() {
   updateProgress();
 }
 
+const STORAGE_KEY = 'sobe-checklist-v1';
+const BADGE_TEXT = { ok: '✓ Ok', issue: '⚠ Problema', na: 'N/A' };
+
 function toggleCard(id) {
   document.getElementById(`card-${id}`).classList.toggle('open');
+  save();
 }
 
 function toggleTool(id) {
   const on = document.getElementById(`toggle-${id}`).checked;
   document.getElementById(`card-${id}`).classList.toggle('disabled', !on);
   updateProgress();
+  save();
 }
 
-function setStatus(key, val, btn) {
-  const prev = state[key];
-  state[key] = (prev === val) ? null : val;
+function setStatus(key, val) {
+  state[key] = (state[key] === val) ? null : val;
+  renderStatus(key);
+  updateProgress();
+  save();
+}
+
+function renderStatus(key) {
+  const val = state[key];
+  const row = document.getElementById(`row-${key}`);
 
   // screen buttons
-  const group = btn.closest('.status-group');
-  group.querySelectorAll('.status-btn').forEach(b => b.classList.remove('s-ok','s-issue','s-na'));
-  if (state[key]) btn.classList.add(`s-${val}`);
+  row.querySelectorAll('.status-btn').forEach(b => {
+    b.classList.remove('s-ok','s-issue','s-na');
+    if (val && b.dataset.val === val) b.classList.add(`s-${val}`);
+  });
 
   // print badge
   const badge = document.getElementById(`badge-${key}`);
-  badge.className = 'print-badge';
-  if (state[key] === 'ok')    { badge.className = 'print-badge b-ok';    badge.textContent = '✓ Ok'; }
-  if (state[key] === 'issue') { badge.className = 'print-badge b-issue'; badge.textContent = '⚠ Problema'; }
-  if (state[key] === 'na')    { badge.className = 'print-badge b-na';    badge.textContent = 'N/A'; }
-  if (!state[key])             { badge.textContent = ''; }
+  badge.className = val ? `print-badge b-${val}` : 'print-badge';
+  badge.textContent = val ? BADGE_TEXT[val] : '';
 
   // dot indicator
   const dot = document.getElementById(`dot-${key}`);
-  dot.className = 'status-dot';
-  if (state[key]) dot.classList.add(`d-${state[key]}`);
+  dot.className = val ? `status-dot d-${val}` : 'status-dot';
 
   // muted label only for na
-  document.getElementById(`row-${key}`).classList.toggle('done', state[key] === 'na');
-
-  updateProgress();
+  row.classList.toggle('done', val === 'na');
 }
 
 function autoGrow(el) {
@@ -648,37 +677,103 @@ function updateProgress() {
   document.getElementById('progressLabel').textContent = `${done} / ${total} itens avaliados`;
 }
 
+// ── PERSISTENCE (localStorage) ──
+function save() {
+  const obs = {};
+  document.querySelectorAll('.obs-field').forEach(f => {
+    if (f.value) obs[f.id.slice(4)] = f.value;
+  });
+  const data = {
+    client: document.getElementById('clientInput').value,
+    owner:  document.getElementById('ownerInput').value,
+    date:   document.getElementById('dateInput').value,
+    status: Object.fromEntries(Object.entries(state).filter(([, v]) => v)),
+    obs,
+    disabled:  TOOLS.filter(t => !document.getElementById(`toggle-${t.id}`).checked).map(t => t.id),
+    collapsed: TOOLS.filter(t => !document.getElementById(`card-${t.id}`).classList.contains('open')).map(t => t.id),
+  };
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); } catch (e) {}
+}
+
+function load() {
+  let data = null;
+  try { data = JSON.parse(localStorage.getItem(STORAGE_KEY)); } catch (e) {}
+  if (!data) return;
+
+  document.getElementById('clientInput').value = data.client || '';
+  document.getElementById('ownerInput').value  = data.owner  || '';
+  if (data.date) document.getElementById('dateInput').value = data.date;
+
+  Object.entries(data.status || {}).forEach(([key, val]) => {
+    if (!(key in state)) return;
+    state[key] = val;
+    renderStatus(key);
+  });
+  Object.entries(data.obs || {}).forEach(([key, val]) => {
+    const f = document.getElementById(`obs-${key}`);
+    if (f) { f.value = val; autoGrow(f); }
+  });
+  (data.disabled || []).forEach(id => {
+    const t = document.getElementById(`toggle-${id}`);
+    if (t) { t.checked = false; document.getElementById(`card-${id}`).classList.add('disabled'); }
+  });
+  (data.collapsed || []).forEach(id => {
+    const c = document.getElementById(`card-${id}`);
+    if (c) c.classList.remove('open');
+  });
+  updateProgress();
+}
+
+// ── PRINT ──
+function pdfTitle() {
+  const client = document.getElementById('clientInput').value.trim();
+  const d = document.getElementById('dateInput').value; // yyyy-mm-dd
+  const date = d ? d.split('-').reverse().join('-') : '';
+  return ['Checklist', client, date].filter(Boolean).join(' – ');
+}
+
 function preparePrint() {
-  // For each obs-field: if has content, swap to a non-textarea div so print shows it
+  // For each obs-field: if has content, add a plain div so print shows it
+  document.querySelectorAll('.obs-visible').forEach(d => d.remove());
   document.querySelectorAll('.obs-field').forEach(el => {
     const txt = el.value.trim();
-    // Remove any previous obs-visible sibling
-    const prev = el.previousElementSibling;
-    if (prev && prev.classList.contains('obs-visible')) prev.remove();
-    if (txt) {
-      const div = document.createElement('div');
-      div.className = 'obs-visible';
-      div.innerHTML = '<strong>Obs:</strong> ' + txt;
-      el.parentNode.insertBefore(div, el);
-    }
+    if (!txt) return;
+    const div = document.createElement('div');
+    div.className = 'obs-visible';
+    const strong = document.createElement('strong');
+    strong.textContent = 'Obs:';
+    div.append(strong, ' ' + txt);
+    el.parentNode.insertBefore(div, el);
   });
+
+  // Browsers use document.title as the default PDF filename
+  const original = document.title;
+  document.title = pdfTitle();
+  window.addEventListener('afterprint', () => { document.title = original; }, { once: true });
   window.print();
 }
 
 function resetAll() {
   if (!confirm('Resetar todos os itens?')) return;
-  Object.keys(state).forEach(k => state[k] = null);
-  document.querySelectorAll('.status-btn').forEach(b => b.classList.remove('s-ok','s-issue','s-na'));
-  document.querySelectorAll('.check-item').forEach(r => r.classList.remove('done'));
-  document.querySelectorAll('.status-dot').forEach(d => d.className = 'status-dot');
+  Object.keys(state).forEach(k => { state[k] = null; renderStatus(k); });
   document.querySelectorAll('.obs-field').forEach(f => { f.value = ''; f.style.height = 'auto'; });
-  document.querySelectorAll('.print-badge').forEach(b => { b.className = 'print-badge'; b.textContent = ''; });
   document.querySelectorAll('.obs-visible').forEach(d => d.remove());
+  document.getElementById('clientInput').value = '';
+  document.getElementById('ownerInput').value = '';
+  document.getElementById('dateInput').valueAsDate = new Date();
+  TOOLS.forEach(t => {
+    document.getElementById(`toggle-${t.id}`).checked = true;
+    document.getElementById(`card-${t.id}`).className = 'tool-card open';
+  });
+  try { localStorage.removeItem(STORAGE_KEY); } catch (e) {}
   updateProgress();
 }
 
 document.getElementById('dateInput').valueAsDate = new Date();
 buildTools();
+load();
+['clientInput', 'ownerInput', 'dateInput'].forEach(id =>
+  document.getElementById(id).addEventListener('input', save));
 </script>
 </body>
 </html>
