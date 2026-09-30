@@ -74,6 +74,12 @@
     border-radius: 3px; transition: width .35s ease; width: 0%;
   }
   .progress-label { font-family: var(--mono); font-size: 11px; color: var(--muted); white-space: nowrap; }
+  .btn-expand {
+    font-family: var(--mono); font-size: 10px; letter-spacing: 1px; text-transform: uppercase;
+    padding: 5px 10px; border-radius: 5px; cursor: pointer; white-space: nowrap;
+    border: 1.5px solid var(--line); background: var(--card); color: var(--accent); transition: all .15s;
+  }
+  .btn-expand:hover { border-color: var(--accent); }
 
   /* ── TOOL CARD ── */
   .tool-card {
@@ -112,8 +118,8 @@
   }
   .tool-toggle input:checked + .toggle-track { background: var(--accent); }
   .tool-toggle input:checked + .toggle-track::after { transform: translateX(15px); }
-  .chevron { font-size: 10px; color: var(--muted); transition: transform .25s; flex-shrink: 0; }
-  .tool-card.open .chevron { transform: rotate(180deg); }
+  .chevron { font-size: 10px; color: var(--muted); transition: transform .25s; flex-shrink: 0; transform: rotate(-90deg); }
+  .tool-card.open .chevron { transform: none; }
 
   /* ── SECTION ── */
   .items-body { padding: 0; }
@@ -344,6 +350,7 @@
 <div class="progress-wrap">
   <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
   <div class="progress-label" id="progressLabel">0 / 0 itens avaliados</div>
+  <button class="btn-expand" id="expandAllBtn" onclick="toggleAll()">Expandir todas</button>
 </div>
 
 <div id="tools-container"></div>
@@ -525,7 +532,7 @@ function buildTools() {
   TOOLS.forEach(tool => {
     const total = tool.sections.reduce((s, sec) => s + sec.items.length, 0);
     const card = document.createElement('div');
-    card.className = 'tool-card open';
+    card.className = 'tool-card';
     card.id = `card-${tool.id}`;
 
     const bodyHTML = tool.sections.map(sec => `
@@ -575,7 +582,23 @@ const BADGE_TEXT = { ok: '✓ Ok', issue: '⚠ Problema', na: 'N/A' };
 
 function toggleCard(id) {
   document.getElementById(`card-${id}`).classList.toggle('open');
+  updateExpandBtn();
   save();
+}
+
+function allOpen() {
+  return TOOLS.every(t => document.getElementById(`card-${t.id}`).classList.contains('open'));
+}
+
+function toggleAll() {
+  const open = !allOpen();
+  TOOLS.forEach(t => document.getElementById(`card-${t.id}`).classList.toggle('open', open));
+  updateExpandBtn();
+  save();
+}
+
+function updateExpandBtn() {
+  document.getElementById('expandAllBtn').textContent = allOpen() ? 'Recolher todas' : 'Expandir todas';
 }
 
 function toggleTool(id) {
@@ -653,7 +676,7 @@ function save() {
     status: Object.fromEntries(Object.entries(state).filter(([, v]) => v)),
     obs,
     disabled:  TOOLS.filter(t => !document.getElementById(`toggle-${t.id}`).checked).map(t => t.id),
-    collapsed: TOOLS.filter(t => !document.getElementById(`card-${t.id}`).classList.contains('open')).map(t => t.id),
+    opened: TOOLS.filter(t => document.getElementById(`card-${t.id}`).classList.contains('open')).map(t => t.id),
   };
   try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); } catch (e) {}
 }
@@ -680,11 +703,13 @@ function load() {
     const t = document.getElementById(`toggle-${id}`);
     if (t) { t.checked = false; document.getElementById(`card-${id}`).classList.add('disabled'); }
   });
-  (data.collapsed || []).forEach(id => {
+  (data.opened || []).forEach(id => {
     const c = document.getElementById(`card-${id}`);
-    if (c) c.classList.remove('open');
+    if (c) c.classList.add('open');
   });
   updateProgress();
+  updateExpandBtn();
+  updateExpandBtn();
 }
 
 // ── PRINT ──
@@ -726,10 +751,11 @@ function resetAll() {
   document.getElementById('dateInput').valueAsDate = new Date();
   TOOLS.forEach(t => {
     document.getElementById(`toggle-${t.id}`).checked = true;
-    document.getElementById(`card-${t.id}`).className = 'tool-card open';
+    document.getElementById(`card-${t.id}`).className = 'tool-card';
   });
   try { localStorage.removeItem(STORAGE_KEY); } catch (e) {}
   updateProgress();
+  updateExpandBtn();
 }
 
 document.getElementById('dateInput').valueAsDate = new Date();
