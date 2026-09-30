@@ -366,12 +366,6 @@ const TOOLS = [
         "Conversões configuradas e alinhadas ao objetivo do cliente",
         "Eventos de formulário e CTA disparando corretamente",
       ]},
-      { title: "Performance", items: [
-        "Taxa de engajamento analisada",
-        "Canais de aquisição revisados — direto inflado indica UTM faltando",
-        "Páginas com maior queda de usuários identificadas",
-        "Comparativo período atual vs. anterior feito",
-      ]},
       { title: "Integrações", items: [
         "Google Ads vinculado",
         "Search Console vinculado",
@@ -403,18 +397,14 @@ const TOOLS = [
         "Campanha de marca existente e ativa",
       ]},
       { title: "Palavras-chave", items: [
-        "Quality Score analisado",
         "Palavras-chave negativas atualizadas",
         "Termos de pesquisa revisados — irrelevantes negativados",
         "Palavras com alto gasto e baixa conversão identificadas",
       ]},
       { title: "Leilão e Concorrência", items: [
         "Relatório de Leilão analisado",
-        "Parcela de impressões perdidas por orçamento verificada",
-        "Parcela de impressões perdidas por qualidade verificada",
       ]},
       { title: "Anúncios", items: [
-        "RSA em todos os grupos com força média ou acima",
         "Extensões configuradas (sitelinks, callouts)",
         "Anúncios com CTR abaixo da média identificados",
       ]},
@@ -424,22 +414,6 @@ const TOOLS = [
         "Campanhas com melhor performance no período identificadas",
         "Campanhas com pior resultado tratadas ou pausadas",
         "Estratégia de lance alinhada ao objetivo",
-      ]},
-    ]
-  },
-  {
-    id: "search_console", emoji: "🔍", name: "Search Console",
-    sections: [
-      { title: "Saúde do Site", items: [
-        "Sitemap enviado sem erros",
-        "Erros de cobertura / indexação revisados",
-        "Core Web Vitals dentro do aceitável",
-      ]},
-      { title: "Performance Orgânica", items: [
-        "Impressões e cliques analisados no período",
-        "CTR médio avaliado — oportunidades identificadas",
-        "Palavras com queda de posição identificadas",
-        "Comparativo de período feito",
       ]},
     ]
   },
@@ -487,8 +461,6 @@ const TOOLS = [
       { title: "Estrutura e Audiências", items: [
         "Campanhas por etapa de funil (topo / meio / fundo)",
         "Remarketing ativo com público adequado",
-        "Lookalike audiences configuradas",
-        "Exclusões de audiência configuradas",
       ]},
       { title: "Performance", items: [
         "CTR, CPM e CPC analisados",
@@ -504,11 +476,6 @@ const TOOLS = [
     sections: [
       { title: "Configuração", items: [
         "Pixel instalado e eventos configurados",
-      ]},
-      { title: "Criativos", items: [
-        "Vídeos no formato nativo TikTok (vertical 9:16)",
-        "Criativos variados em teste",
-        "Ad fatigue monitorado — criativos renovados quando necessário",
       ]},
       { title: "Performance", items: [
         "Taxa de visualização de vídeo analisada",
@@ -526,8 +493,6 @@ const TOOLS = [
       ]},
       { title: "Segmentação", items: [
         "Segmentação B2B configurada (cargo, setor, senioridade)",
-        "Remarketing de visitantes ativo",
-        "Exclusão de clientes atuais configurada",
       ]},
       { title: "Performance", items: [
         "CTR analisado",
@@ -544,8 +509,6 @@ const TOOLS = [
         "UTMs de campanha chegando corretamente",
       ]},
       { title: "Performance de Vendas", items: [
-        "Taxa de conversão do checkout analisada",
-        "Abandono de checkout identificado",
         "Receita total, ticket médio e número de vendas revisados",
         "Origem das vendas por canal identificada",
         "Reembolsos e chargeback monitorados",
@@ -607,7 +570,7 @@ function buildTools() {
   updateProgress();
 }
 
-const STORAGE_KEY = 'sobe-checklist-v1';
+const STORAGE_KEY = 'sobe-checklist-v2';
 const BADGE_TEXT = { ok: '✓ Ok', issue: '⚠ Problema', na: 'N/A' };
 
 function toggleCard(id) {
