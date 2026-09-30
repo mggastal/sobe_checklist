@@ -94,7 +94,7 @@
   }
   .tool-card.disabled .tool-header { border-bottom: none; }
   .tool-header:hover { background: #fafaf8; }
-  .tool-emoji { font-size: 17px; width: 22px; text-align: center; flex-shrink: 0; }
+  .tool-logo { width: 22px; height: 22px; object-fit: contain; flex-shrink: 0; display: block; }
   .tool-name { font-family: var(--display); font-weight: 700; font-size: 13.5px; flex: 1; letter-spacing: -.2px; color: var(--accent); }
   .tool-count { font-family: var(--mono); font-size: 11px; color: var(--muted); flex-shrink: 0; }
 
@@ -356,7 +356,7 @@
 <script>
 const TOOLS = [
   {
-    id: "ga4", emoji: "📊", name: "Google Analytics 4",
+    id: "ga4", logo: "logos/ga4.svg", name: "Google Analytics 4",
     sections: [
       { title: "Configuração", items: [
         "Propriedade GA4 instalada e recebendo dados",
@@ -373,7 +373,7 @@ const TOOLS = [
     ]
   },
   {
-    id: "gtm", emoji: "🏷️", name: "Google Tag Manager",
+    id: "gtm", logo: "logos/gtm.svg", name: "Google Tag Manager",
     sections: [
       { title: "Saúde do Container", items: [
         "Container publicado e sem tags duplicadas",
@@ -389,7 +389,7 @@ const TOOLS = [
     ]
   },
   {
-    id: "google_ads", emoji: "🎯", name: "Google Ads",
+    id: "google_ads", logo: "logos/google-ads.svg", name: "Google Ads",
     sections: [
       { title: "Estrutura", items: [
         "Campanhas organizadas por objetivo / produto",
@@ -418,7 +418,7 @@ const TOOLS = [
     ]
   },
   {
-    id: "navegg", emoji: "👥", name: "Navegg",
+    id: "navegg", logo: "logos/navegg.svg", name: "Navegg",
     sections: [
       { title: "Instalação e Dados", items: [
         "Script instalado e conta ativa com dados sendo enviados",
@@ -427,7 +427,7 @@ const TOOLS = [
     ]
   },
   {
-    id: "hotjar", emoji: "🔥", name: "Hotjar",
+    id: "hotjar", logo: "logos/hotjar.svg", name: "Hotjar",
     sections: [
       { title: "Instalação e Dados", items: [
         "Script instalado e sessões sendo gravadas",
@@ -436,7 +436,7 @@ const TOOLS = [
     ]
   },
   {
-    id: "gmb", emoji: "📍", name: "Google Meu Negócio",
+    id: "gmb", logo: "logos/gmb.svg", name: "Google Meu Negócio",
     sections: [
       { title: "Perfil", items: [
         "Perfil verificado, endereço e horário corretos",
@@ -451,7 +451,7 @@ const TOOLS = [
     ]
   },
   {
-    id: "meta", emoji: "📘", name: "Meta Ads",
+    id: "meta", logo: "logos/meta.svg", name: "Meta Ads",
     sections: [
       { title: "Configuração", items: [
         "Pixel instalado e disparando sem duplicidade",
@@ -472,7 +472,7 @@ const TOOLS = [
     ]
   },
   {
-    id: "tiktok", emoji: "🎵", name: "TikTok Ads",
+    id: "tiktok", logo: "logos/tiktok.svg", name: "TikTok Ads",
     sections: [
       { title: "Configuração", items: [
         "Pixel instalado e eventos configurados",
@@ -485,7 +485,7 @@ const TOOLS = [
     ]
   },
   {
-    id: "linkedin", emoji: "💼", name: "LinkedIn Ads",
+    id: "linkedin", logo: "logos/linkedin.svg", name: "LinkedIn Ads",
     sections: [
       { title: "Configuração", items: [
         "Insight Tag instalada no site",
@@ -502,7 +502,7 @@ const TOOLS = [
     ]
   },
   {
-    id: "hotmart", emoji: "🛒", name: "Hotmart",
+    id: "hotmart", logo: "logos/hotmart.png", name: "Hotmart",
     sections: [
       { title: "Configuração", items: [
         "Pixel e GA4 integrados ao checkout",
@@ -554,7 +554,7 @@ function buildTools() {
 
     card.innerHTML = `
       <div class="tool-header" onclick="toggleCard('${tool.id}')">
-        <span class="tool-emoji">${tool.emoji}</span>
+        <img class="tool-logo" src="${tool.logo}" alt="">
         <span class="tool-name">${tool.name}</span>
         <span class="tool-count" id="count-${tool.id}">0 / ${total}</span>
         <label class="tool-toggle" onclick="event.stopPropagation()" title="Ativar / desativar">
